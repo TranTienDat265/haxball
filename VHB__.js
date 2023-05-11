@@ -508,7 +508,19 @@
             { "radius" : 5.5, "invMass" : 0, "pos" : [-474,-186 ], "color" : "333354", "trait" : "art" },
             { "radius" : 4.5, "invMass" : 0, "pos" : [-474.5,-191.5 ], "color" : "dab7a4", "trait" : "art" },
             
-            { "radius" : 100000, "invMass" : 300, "pos" : [0,-100000 ], "color" : "ffffffff", "bCoef" : 0, "cMask" : ["ball" ] }
+            { "radius" : 100000, "invMass" : 300, "pos" : [0,-100000 ], "color" : "ffffffff", "bCoef" : 0, "cMask" : ["ball" ] },
+            
+            { "invMass" : 0, "pos" : [-93,671 ], "bCoef" : 0, "trait" : "ballArea", "damping" : 0, "speed" : [0,0 ], "gravity" : [0,0 ] },
+             { "invMass" : 0, "pos" : [-49,626 ], "bCoef" : 0, "trait" : "ballArea", "damping" : 0, "speed" : [0,0 ], "gravity" : [0,0 ] },
+            { "invMass" : 0, "pos" : [-26,699 ], "bCoef" : 0, "trait" : "ballArea", "damping" : 0, "speed" : [0,0 ], "gravity" : [0,0 ] },
+            { "invMass" : 0, "pos" : [34,670 ], "bCoef" : 0, "trait" : "ballArea", "damping" : 0, "speed" : [0,0 ], "gravity" : [0,0 ] },
+            { "invMass" : 0, "pos" : [7,597 ], "bCoef" : 0, "trait" : "ballArea", "damping" : 0, "speed" : [0,0 ], "gravity" : [0,0 ] },
+            { "invMass" : 0, "pos" : [104,655 ], "bCoef" : 0, "trait" : "ballArea", "damping" : 0, "speed" : [0,0 ], "gravity" : [0,0 ] },
+            { "invMass" : 0, "pos" : [42,617 ], "bCoef" : 0, "trait" : "ballArea", "damping" : 0, "speed" : [0,0 ], "gravity" : [0,0 ] },
+            { "invMass" : 0, "pos" : [110,603 ], "bCoef" : 0, "trait" : "ballArea", "damping" : 0, "speed" : [0,0 ], "gravity" : [0,0 ] },
+            { "invMass" : 0, "pos" : [109,567 ], "bCoef" : 0, "trait" : "ballArea", "damping" : 0, "speed" : [0,0 ], "gravity" : [0,0 ] },
+            { "invMass" : 0, "pos" : [54,567 ], "bCoef" : 0, "trait" : "ballArea", "damping" : 0, "speed" : [0,0 ], "gravity" : [0,0 ] },
+            { "invMass" : 0, "pos" : [80,526 ], "bCoef" : 0, "trait" : "ballArea", "damping" : 0, "speed" : [0,0 ], "gravity" : [0,0 ] }
     
         ],
     
@@ -578,7 +590,9 @@
         "blueSpawnPoints" : [
             
     
-        ]
+        ],
+    
+        "canBeStored" : false
     }`;
 	room.setCustomStadium(volleyMap);
 
@@ -1093,9 +1107,32 @@
 				else if (args[0] == "bb") {
 					room.kickPlayer(player.id, "Bye", false);
 				}	
-				return false;
+                else if (args[0] == "move") {
+                    var z = parseInt(args[1]);
+                    var x = parseInt(args[2]);
+                    var y = parseInt(args[3]);
+                    move(z,x,y);
+                }
+                else if (args[0] == "bl") {
+                    // console.log(typeof room.getDiscProperties(19).x);
+                    // console.log(tmp);
+                    console.log(pos_x)
+                    console.log(pos_y)
+                    createBlock()
+                    // khoitao();
+                    console.log("---------------------")
+                    console.log(pos_x)
+                    console.log(pos_y)
+                }
+                else if (args[0] == "rmbl") removeBlock()
+                else if (args[0] == "print") {
+                    var disc = parseInt(args[1])
+                    print(disc);
+                }
+            return false;
 	    }
-        else if (message.startsWith("'")) SpikeBot();
+        else if (message.startsWith("'")) SpikeBot()
+        // else if (message.startsWith("]")) print(player);
 	}
 	function sleep (time) {
 	return new Promise((resolve) => setTimeout(resolve, time));
@@ -1130,6 +1167,7 @@
 			room.startRecording();	
         random_uni();
         loop_passbot();
+        recogBlock();
         // if (inloop_passbot == false) 
 	}
 
@@ -1212,6 +1250,7 @@
 			goldenGoal = false;
 			setTimeout(() => { room.stopGame(); }, 1000);
 		}
+        setTimeout(() => { removeBlock(); }, 1000);
 	}
 	room.onTeamVictory = function (scores) {
 		start_match();
@@ -1558,16 +1597,21 @@ function SpikeBot() {
     room.setDiscProperties(0,{x: pos_x, y: pos_y, xspeed: rand_xspeed, yspeed: rand_yspeed});
 }
 
+var rand_xspeed_list_red = [2.1, 2.2, 2.3, 2.4, 2.5]
+var rand_xspeed_list_blue = [-2.1, -2.2, -2.3, -2.4, -2.5]
+
 function PassBot(player) {
     if (passbot_mode == 1) {
-        let rand_xspeed = RandRangeInt(2,4);
+        let rand_xspeed = rand_xspeed_list_red[getRandomInt(rand_xspeed_list_red.length-1)];
+        // let res = "0x"+ listColor[randNumber];
+        console.log(rand_xspeed)
         let rand_yspeed = RandRangeInt(-13,-11);
         let pos_x = RandRangeInt(-250,-240);
         let pos_y = RandRangeInt(150,160);
         room.setDiscProperties(0,{x: pos_x, y: pos_y, xspeed: rand_xspeed, yspeed: rand_yspeed});
     }
     else if (passbot_mode == 2) {
-        let rand_xspeed = RandRangeInt(-3,-1);
+        let rand_xspeed = rand_xspeed_list_blue[getRandomInt(rand_xspeed_list_blue.length-1)];
         let rand_yspeed = RandRangeInt(-13,-11);
         let pos_x = RandRangeInt(240,250);
         let pos_y = RandRangeInt(150,160);
@@ -1591,7 +1635,9 @@ function setPositionPassBot() {
 				room.setPlayerDiscProperties(player.id, {x: pos_x, y: pos_y});
                 pos_x , pos_y += 5;
 			});
+    createBlock();
 }
+
 function loop_passbot() {
     if (passbot_mode != 0 ) {
         announce(passbot_mode);
@@ -1601,3 +1647,48 @@ function loop_passbot() {
         });
     }
 }
+
+function print(x) {
+	console.log(typeof room.getDiscProperties(x).x);
+}
+
+function move(disc,pos_x,pos_y) {
+    room.setDiscProperties(disc,{x: pos_x, y: pos_y})
+}
+
+var randBlockCount = 0;
+var pos_x = [];
+var pos_y = [];
+function recogBlock() { 
+    for (var i = 19; i < 29; i++) {
+       pos_x[i] = (room.getDiscProperties(i).x)
+       pos_y[i] = (room.getDiscProperties(i).y)
+    }
+}
+
+function createBlock() {
+    randBlockCount = RandRangeInt(6,11)
+    if (passbot_mode == 1) {
+        let x_pos = RandRangeInt(4,6)
+        let y_pos = RandRangeInt(-170,-165);
+        for (var i = 19; i < 19 + randBlockCount; i++) {
+            room.setDiscProperties(i,{x: x_pos, y: y_pos})
+            y_pos += 22
+        }
+    }
+    else if (passbot_mode == 2) {
+        let x_pos = RandRangeInt(-6,-4)
+        let y_pos = RandRangeInt(-170,-165);
+        for (var i = 19; i < 19 + randBlockCount; i++) {
+            room.setDiscProperties(i,{x: x_pos, y: y_pos})
+            y_pos += 22
+        }
+    }
+}
+
+function removeBlock() {
+    for (var i = 19; i < 29; i++) {
+        room.setDiscProperties(i,{x: pos_x[i], y: pos_y[i]})
+    }
+}
+
