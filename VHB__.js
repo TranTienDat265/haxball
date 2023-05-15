@@ -639,6 +639,8 @@
     var randBallColor_bol = true;
     var passbot_mode = 0;
     var inloop_passbot = false;
+    var serve_team = 0;
+    var last_serve_team = 0;
    // var randBallRadius_bol = false;
     var randPlayerRadius_bol = false;
     var rand_uni = true;
@@ -1113,7 +1115,7 @@
                     var y = parseInt(args[3]);
                     move(z,x,y);
                 }
-                else if (args[0] == "bl") {
+                /* else if (args[0] == "bl") {
                     // console.log(typeof room.getDiscProperties(19).x);
                     // console.log(tmp);
                     console.log(pos_x)
@@ -1124,7 +1126,7 @@
                     console.log(pos_x)
                     console.log(pos_y)
                 }
-                else if (args[0] == "rmbl") removeBlock()
+                else if (args[0] == "rmbl") removeBlock() */
                 else if (args[0] == "print") {
                     var disc = parseInt(args[1])
                     print(disc);
@@ -1132,7 +1134,24 @@
             return false;
 	    }
         else if (message.startsWith("'")) SpikeBot()
-        // else if (message.startsWith("]")) print(player);
+        else if (message == "a" && goalCheering == false) {
+            if (serve_team == 0) whisper("Đã giao bóng!", player.id)
+            else if (serve_team != player.team) whisper("Không phải lượt của đội bạn!", player.id)
+            else JumpSpinServe();
+            return false;
+        }
+        else if (message == "q" && goalCheering == false) {
+            if (serve_team == 0) whisper("Đã giao bóng!", player.id)
+            else if (serve_team != player.team) whisper("Không phải lượt của đội bạn!", player.id)
+            else JumpFloatServe();
+            return false;
+        }
+        else if (message == "z" && goalCheering == false) {
+            if (serve_team == 0) whisper("Đã giao bóng!", player.id)
+            else if (serve_team != player.team) whisper("Không phải lượt của đội bạn!", player.id)
+            else FloatServe();
+            return false;
+        }
 	}
 	function sleep (time) {
 	return new Promise((resolve) => setTimeout(resolve, time));
@@ -1156,6 +1175,8 @@
 		abusingTimeStamp = 0;
 		potentialBugAbusing = false;
 		abusingPosition = 0;
+        last_serve_team  = 2;
+        serve_team = 2;
 		lastPlayersTouched = [null, null];
 		lastPlayersTouchedTime = Date.now();
 		abusingPlayer = null;
@@ -1168,7 +1189,6 @@
         random_uni();
         loop_passbot();
         recogBlock();
-        // if (inloop_passbot == false) 
 	}
 
 	room.onGameStop = function (byPlayer) {
@@ -1198,6 +1218,7 @@
 		if (goalCheering) {
 			return;
 		}
+
 		var teamCount = getPlayerCount(player.team);
 		if (((lastPlayersTouched[0] != null && lastPlayersTouched[0].id == player.id) && teamCount != 1) && !blocked) {
 			announce("❌ Phạm lỗi! " + player.name + " chạm bóng 2 lần!");
@@ -1206,6 +1227,7 @@
 		blocked = false;
 		if (lastPlayersTouched[0] != null && lastPlayersTouched[0].team == player.team && (Date.now() - lastPlayersTouchedTime) > 200) {
 			totalTouches = totalTouches + 1;
+            // announce(totalTouches)
 			if (teamCount != 1) {
 				if (totalTouches > 3) {
 					announce("❌ Phạm lỗi! Hơn 3 chạm");
@@ -1229,6 +1251,10 @@
 			lastPlayersTouched[0] = player;
 		}
 		lastPlayersTouchedTime = Date.now();
+
+        if (serve_team == player.team && goalCheering == false) serve_team = 0;
+        if (last_serve_team == player.team && totalTouches == 2) givePenalty(player.team)
+        else if (last_serve_team != player.team) last_serve_team  = 0;
 	}
 
 	room.onTeamGoal = function (team) {
@@ -1237,13 +1263,19 @@
 		if (lastPlayersTouched[0] != null && lastPlayersTouched[0].team == team) {
 			if (lastPlayersTouched[1] != null && lastPlayersTouched[1].team == team) {
 			announce("🏐 " + getTime(scores) + " Điểm cho " + (team == Team.RED ? "🔴" : "🔵"));
+            serve_team = team
+            last_serve_team = team
 			}
 			else {
 				announce("🏐 " + getTime(scores) + " Điểm cho " + (team == Team.RED ? "🔴" : "🔵"));
+                serve_team = team
+                last_serve_team = team
 			}
 		}
 		else {
 			announce("🏐 " + getTime(scores) + "Điểm cho " + (team == Team.RED ? "🔴" : "🔵"));
+            serve_team = team
+            last_serve_team = team
 		}
 		if (scores.red == scores.scoreLimit || scores.blue == scores.scoreLimit || goldenGoal == true) {
 			endGame(team);
@@ -1261,8 +1293,8 @@
 		//RecSistem.sendDiscordWebhook(scores);
 		goalCheering = false;
 		lastPlayersTouched = [null, null];
-		for(var i=0; i<players.length; i++){
-		activities[players[i].id] = Date.now();
+		for (var i=0; i<players.length; i++){
+		    activities[players[i].id] = Date.now();
 		}
         loop_passbot();
 	}
@@ -1589,6 +1621,8 @@ function random_uni() {
     }
 }
 
+/* PASSBOT MODE AND SPIKE MODE */
+
 function SpikeBot() {
     let rand_xspeed = RandRangeInt(1,10);
     let rand_yspeed = RandRangeInt(1,4);
@@ -1600,11 +1634,31 @@ function SpikeBot() {
 var rand_xspeed_list_red = [2.1, 2.2, 2.3, 2.4, 2.5]
 var rand_xspeed_list_blue = [-2.1, -2.2, -2.3, -2.4, -2.5]
 
-function PassBot(player) {
+function PassBot() {
+    if (passbot_mode == 1) {
+        let rand_xspeed = 2.6;
+        let rand_yspeed = -11.895;
+        let pos_x = -200;
+        let pos_y = 185;
+           /*  console.log(pos_y)
+            console.log(pos_x)
+            console.log(rand_xspeed)
+            console.log(rand_yspeed)
+            console.log('___________________________') */
+        room.setDiscProperties(0,{x: pos_x, y: pos_y, xspeed: rand_xspeed, yspeed: rand_yspeed});
+    }
+    else if (passbot_mode == 2) {
+        let rand_xspeed = rand_xspeed_list_blue[getRandomInt(rand_xspeed_list_blue.length-1)];
+        let rand_yspeed = RandRangeInt(-13,-11);
+        let pos_x = RandRangeInt(240,250);
+        let pos_y = RandRangeInt(150,160);
+        room.setDiscProperties(0,{x: pos_x, y: pos_y, xspeed: rand_xspeed, yspeed: rand_yspeed});
+    }
+}
+
+/* function PassBot() {
     if (passbot_mode == 1) {
         let rand_xspeed = rand_xspeed_list_red[getRandomInt(rand_xspeed_list_red.length-1)];
-        // let res = "0x"+ listColor[randNumber];
-        console.log(rand_xspeed)
         let rand_yspeed = RandRangeInt(-13,-11);
         let pos_x = RandRangeInt(-250,-240);
         let pos_y = RandRangeInt(150,160);
@@ -1618,7 +1672,7 @@ function PassBot(player) {
         room.setDiscProperties(0,{x: pos_x, y: pos_y, xspeed: rand_xspeed, yspeed: rand_yspeed});
     }
 }
-
+ */
 function setPositionPassBot() {
     var pos_x = 0;
     var pos_y = 0;
@@ -1659,6 +1713,7 @@ function move(disc,pos_x,pos_y) {
 var randBlockCount = 0;
 var pos_x = [];
 var pos_y = [];
+
 function recogBlock() { 
     for (var i = 19; i < 29; i++) {
        pos_x[i] = (room.getDiscProperties(i).x)
@@ -1692,3 +1747,62 @@ function removeBlock() {
     }
 }
 
+function JumpSpinServe() {
+    if (serve_team == 1) {
+        let x_gra = 0.002;
+        let x_pos = -350;
+        let y_pos = 200;
+        let x_speed = 1.2;
+        let y_speed = -16;
+        room.setDiscProperties(0,{x:x_pos, y: y_pos, xgravity: x_gra, xspeed: x_speed, yspeed: y_speed})
+    }
+    else if (serve_team == 2) {
+        let x_gra = -0.002;
+        let x_pos = 350;
+        let y_pos = 200;
+        let x_speed = -1.2;
+        let y_speed = -16;
+        room.setDiscProperties(0,{x:x_pos, y: y_pos, xgravity: x_gra, xspeed: x_speed, yspeed: y_speed})
+    }
+    serve_team = 0;
+}
+
+function JumpFloatServe() {
+    if (serve_team == 1) {
+        let x_gra = -0.0001;
+        let x_pos = -350;
+        let y_pos = 200;
+        let x_speed = 1.2;
+        let y_speed = -13.5;
+        room.setDiscProperties(0,{x:x_pos, y: y_pos, xgravity: x_gra, xspeed: x_speed, yspeed: y_speed})
+    }
+    else if (serve_team == 2) {
+        let x_gra = 0.0001;
+        let x_pos = 350;
+        let y_pos = 200;
+        let x_speed = -1.2;
+        let y_speed = -13.5;
+        room.setDiscProperties(0,{x:x_pos, y: y_pos, xgravity: x_gra, xspeed: x_speed, yspeed: y_speed})
+    }
+    serve_team = 0;
+}
+
+function FloatServe() {
+    if (serve_team == 1) {
+        let x_gra = -0.0000001;
+        let x_pos = -350;
+        let y_pos = 200;
+        let x_speed = 1.2;
+        let y_speed = -11;
+        room.setDiscProperties(0,{x:x_pos, y: y_pos, xgravity: x_gra, xspeed: x_speed, yspeed: y_speed})
+    }
+    else if (serve_team == 2) {
+        let x_gra = 0.0000001;
+        let x_pos = 350;
+        let y_pos = 200;
+        let x_speed = -1.2;
+        let y_speed = -11;
+        room.setDiscProperties(0,{x:x_pos, y: y_pos, xgravity: x_gra, xspeed: x_speed, yspeed: y_speed})
+    }
+    serve_team = 0;
+}
