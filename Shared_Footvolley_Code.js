@@ -5,7 +5,7 @@
 const roomName = "⛺ Footvolley 6v6 ⛺";
 const botName = "_____𝔸𝔽𝕂 𝔹𝔼𝕃𝕆𝕎_____";
 const maxPlayers = 30;
-const roomPublic = true;
+const roomPublic = false;
 const geo = [{ "code": "IT", "lat": 41.9, "lon": 12.5 },{code: "VN", lat: 10.957413  , lon: 106.842687},];
 
 const room = HBInit({ roomName: roomName, maxPlayers: maxPlayers, public: roomPublic, playerName: botName, geo: geo[1]});
@@ -21,7 +21,7 @@ var mapFieldColor = "2c6b96";
 
 room.setCustomStadium(getVolley2DMap());
 
-var adminPassword = 'vhb_vhb_'
+var adminPassword = 'private_footvolley'
 var superAdminCode = "07112006";
 var superAdminList = ["_dGjHAlwrHCj0LPIFlwf3WzzT4g3gx3kOOcVnLnWlIA","XIQkNNZTSuDelPWwpkePGpndlK6KQ2wfNIup7kOA_c8","j3KOPUn6XoLokd6KcIH-22IlsuxbYTX7HLtEuR8_ees", "Is-QlKOEkBGuf7Qd-rcQE0EN-Qy8xJ0pf0URLPz-Zfg"];
 var tempSuperAdminList = [];
@@ -290,18 +290,15 @@ function getStats () {
 var on_match = false
 var has_player = false
 room.onPlayerJoin = function (player) {
-    // resetTeamCount()
     extendedP.push([player.id, player.auth, player.conn, false, 0, 0, false]);
     updateTeams();
     arrangeSpecList();
-    // getAuth(player)
     if (superAdminList.includes(player.auth)) {
         room.setPlayerAdmin(player.id, true)
         superAdmins.push(player.id);
         announce(player.name + " đã trở thành Super Admin", null, 0xfeca0a);
         tempSuperAdminList.push(player.id);
     }
-    updateRoleOnPlayerIn();
 setTimeout(() =>{
     if (db.log.filter((p) => p.id == player.id).length == 0) { db.log.push({ id: player.id, lm: [] }); }
     whisper("🎖      🏆 Chào Mừng Đến Với Siêu CUP HaxSport Champion League | HSCL  🏆              🎖 ", player.id, 0xD24780, "bold", 0);
@@ -311,45 +308,6 @@ setTimeout(() =>{
     dash_object[player.id] = 0
     sendAuthToDiscord(player);
     },1000);
-}
-function start_match(){
-    if (on_match == false && has_player == true) {
-            announce("Trận đấu sẽ bắt đầu sau 10 giây",null,0xdb1a64)
-            on_match = true
-            sleep(10000).then(() => {
-                room.startGame()
-                
-            });	
-        
-        }
-}
-var RedPlayer_Count = 0
-var BluePlayer_Count= 0
-function resetTeamCount() {
-    
-
-    
-            RedPlayer_Count = 0
-            BluePlayer_Count = 0
-            room.getPlayerList().forEach(function(player) {
-                if (player.team == 1) {
-                    RedPlayer_Count += 1
-                }
-                else if (player.team == 2){
-                    BluePlayer_Count += 1
-                }
-            });
-
-            // check if reached max
-            // codition
-            if (BluePlayer_Count > 0 && RedPlayer_Count > 0){
-                has_player = true
-            }
-
-
-            // start match
-            start_match()
-    
 }
 
 room.onPlayerTeamChange = function (changedPlayer, byPlayer) {
@@ -368,12 +326,10 @@ room.onPlayerTeamChange = function (changedPlayer, byPlayer) {
     if (getAFK(changedPlayer) && changedPlayer.team != Team.SPECTATORS) {
         return;
     }
-    // announce("check");
     if (changedPlayer.team == Team.SPECTATORS && !getAFK(changedPlayer)) {
         setActivity(changedPlayer, 0);
         arrangeSpecList();
     }
-    // start_match()
     updateTeams();
     if (room.getScores() != null) blockGoalKick();
 
@@ -382,78 +338,13 @@ room.onPlayerTeamChange = function (changedPlayer, byPlayer) {
         announce("Chế độ tập luyện đã bị tắt vì đã đủ người chơi" ,null)
     }
     if (player_serve != null && player_serve.id == changedPlayer.id) player_serve = null;
-    // resetTeamCount()
     if(byPlayer != null){
     activities[byPlayer.id] = Date.now();
     if(changedPlayer.id == byPlayer.id){
         activities[changedPlayer.id] = Date.now();
     }
     }
-    if (inChooseMode && resettingTeams == false && byPlayer.id == 0) {
-        if (Math.abs(teamR.length - teamB.length) == teamS.length) {
-            deactivateChooseMode();
-            resumeGame();
-            var b = teamS.length;
-            if (teamR.length > teamB.length) {
-                for (var i = 0; i < b; i++) {
-                    setTimeout(() => {
-                        room.setPlayerTeam(teamS[0].id, Team.BLUE);
-                    }, 200 * i);
-                }
-            } else {
-                for (var i = 0; i < b; i++) {
-                    setTimeout(() => {
-                        room.setPlayerTeam(teamS[0].id, Team.RED);
-                    }, 200 * i);
-                }
-            }
-            return;
-        } else if ((teamR.length == maxTeamSize && teamB.length == maxTeamSize) || (teamR.length == teamB.length && teamS.length < 2)) {
-            deactivateChooseMode();
-            resumeGame();
-        } else {
-            choosePlayer();
-        }
-    }
-}
-
-room.onPlayerLeave = function (player) {
-    db.log.splice(f(db.log, 'id', player.id), 1);
-    ids[player.id] = undefined;
-    updateTeams();
-    // resetTeamCount()
-    afkPlayerIDs.delete(player.id);
-    delete activities[player.id];
-    delete dash_object[player.id]
-    setActivity(player, 0);
-    let index = superAdmins.indexOf(player.id);
-    if (index > -1) {
-        sleep(100).then(() => {
-            superAdmins.splice(index, 1);
-        });
-    }
-    let indicator = tempSuperAdminList.indexOf(player.id);
-    if (indicator > -1) {
-        sleep(100).then(() => {
-            tempSuperAdminList.splice(index, 1);
-        });
-    }
-    if (teamR.findIndex((red) => red.id == player.id) == 0 && inChooseMode && teamR.length <= teamB.length) {
-        choosePlayer();
-        capLeft = true;
-        setTimeout(() => {
-            capLeft = false;
-        }, 10);  
-    }
-    if (teamB.findIndex((blue) => blue.id == player.id) == 0 && inChooseMode && teamB.length < teamR.length) {
-        choosePlayer();
-        capLeft = true;
-        setTimeout(() => {
-            capLeft = false;
-        }, 10);
-    }
-    if (player_serve != null && player_serve.id == player.id) player_serve = null;
-    updateRoleOnPlayerOut()
+    
 }
 
 room.onPlayerKicked = function (kickedPlayer, reason, ban, byPlayer) {
@@ -485,9 +376,6 @@ room.onPlayerChat = function(player, message) {
         room.kickPlayer(player.id,'Ngôn từ không hợp lệ',true)
         return
     }
-/*    let arg = message.split(" ");
-    console.log(message.trim())
-    console.log(arg) */
     if (message.startsWith("!")) {
 
         message = message.substr(1);
@@ -499,13 +387,6 @@ room.onPlayerChat = function(player, message) {
                 room.setPlayerAdmin(player.id, true);
                 announce(player.name + " đã trở thành Admin", null, 0xfeca0a);
             }
-            /* else if (args[1] == superAdminCode) {
-                    room.setPlayerAdmin(player.id, true);
-                    if (superAdmins.indexOf(player.id) === -1) {
-                        superAdmins.push(player.id);
-                    }
-                    announce(player.name + " đã trở thành Super Admin");
-            } */
         }
         else if (args[0] == "claim") {
             if (tempSuperAdminList.includes(player.id) && superAdmins.indexOf(player.id) === -1) {
@@ -630,42 +511,6 @@ room.onPlayerChat = function(player, message) {
                     announce("Admin đã bỏ quyền điều khiển", null, 0xead1dc)
                 }
             }
-            else if (args[0] == "randBallColor" && player.admin){
-                if (superAdmins.indexOf(player.id) > -1) {
-                    if (randBallColor_bol == false) {
-                        randBallColor_bol = true;
-                        announce("RandBallColor Mode is ON",null,"0x4bff07",null,1);
-                    }
-                    else {
-                        randBallColor_bol = false;
-                        announce("RandBallColor Mode is OFF",null,"0xf44336",null,1);
-                    }
-                }
-                else whisper("Super Admin commands!", player.id);
-            }
-            /* else if (args[0] == "randBallRadius" && player.admin){
-                if (randBallRadius_bol == false) {
-                    randBallRadius_bol = true;
-                    announce("RandBallRadius Mode is ON",null,"4bff07",null,1);
-                }
-                else {
-                    randBallRadius_bol = false;
-                    announce("RandBallRadius Mode is ON",null,"f44336",null,1);
-                }
-            } */
-            else if (args[0] == "randPlayerRadius" && player.admin){
-                if (superAdmins.indexOf(player.id) > -1) {
-                    if (randPlayerRadius_bol == false) {
-                        randPlayerRadius_bol = true;
-                        announce("RandPlayerRadius Mode is ON",null,"0x4bff07",null,1);
-                    }
-                    else {
-                        randPlayerRadius_bol = false;
-                        announce("RandPlayerRadius Mode is OFF",null,"0xf44336",null,1);
-                    }
-                }
-                else whisper("Super Admin commands!", player.id);
-            }
             else if (args[0] == "rand_uni" && player.admin) {
                 if (rand_uni == false) {
                     rand_uni = true;
@@ -679,32 +524,6 @@ room.onPlayerChat = function(player, message) {
                     room.setTeamColors(2, 0, 0xFFFFFF, [0x247AFF]);
                 }
             }
-            else if (args[0] == "admin_help" && player.admin) {
-                whisper("!control, !randBallColor, !randPlayerRadius, !rand_uni",player.id);
-            }
-            /* else if (args[0] == "passbot") {
-                if (args[1] == "stop") {
-                    passbot_mode = 0;
-                    announce("Chế độ tập luyện đã bị tắt");
-                }
-                else {
-                    var cnt_red = getPlayerCount(1);
-                    var cnt_blue = getPlayerCount(2);
-                    if (player.team == 1 && cnt_blue <=1 && cnt_red <= 2) {
-                        passbot_mode = 1;
-                        room.stopGame();
-                        room.startGame();
-                    }
-                    else if (player.team == 2 && cnt_blue <=2 && cnt_red <= 1) {
-                        passbot_mode = 2;
-                        room.stopGame();
-                        room.startGame();
-                    }
-                    else if (player.team == 0){
-                        whisper("Bạn hãy chọn đội trước", player.id)
-                    }
-                }
-            } */
             else if (args[0] == "swap") {
                 if (player.admin) {
                     if (args.length == 1) {
@@ -781,13 +600,6 @@ room.onPlayerChat = function(player, message) {
                     backFromAFK(player.id);
                 }
                 announce(player.name + (getAFK(player) ? " đã vào chế độ AFK. Nhập !afk để trở lại. " : " đã thoát chế độ AFK."), null, getAFK(player) ? 0xF1948A : 0x26BEDC, "italic" );
-                getAFK(player) ? updateRoleOnPlayerOut() : updateRoleOnPlayerIn();
-            }
-            else if (args[0] == "move") {
-                var z = parseInt(args[1]);
-                var x = parseInt(args[2]);
-                var y = parseInt(args[3]);
-                move(z,x,y);
             }
             else if (args[0] == "twoSecondMode" && player.admin) {
                 if (twoSecond) {
@@ -799,76 +611,7 @@ room.onPlayerChat = function(player, message) {
                     announce("Chế độ bóng 2s đã được bật", null, 0x8afa58);
                 }
             }
-            else if (args[0] == "ngu") {
-                announce(room.getDiscProperties(0).invMass);
-            }
-        /* 	else if (args[0] == "cc") {
-                if (args.length == 1) {
-                    console.log(room.getDiscProperties(0).cGroup);
-                }
-                else {
-                    console.log(room.getPlayerDiscProperties(player.id).cGroup);
-                }
-            }
-            else if (args[0] == "lol") {
-                console.log(room.getDiscProperties(0).invMass);
-                console.log(last_serve_team);
-            }
-            else if (args[0] == "asd") {
-                let pos_x = room.getDiscProperties(0).x;
-                let pos_y = room.getDiscProperties(0).y;
-                announce(pos_x + " "+ pos_y);
-            } */
         return false;
-    }
-    if (teamR.length != 0 && teamB.length != 0 && inChooseMode) { // to choose the team
-        if (player.id == teamR[0].id || player.id == teamB[0].id) { // here we care if it is one of the captains choosing
-            if (teamR.length <= teamB.length && player.id == teamR[0].id) { // here we care if it's red turn && red cap talking
-                if (!Number.isNaN(Number.parseInt(message[0]))) {
-                    if (Number.parseInt(message[0]) > teamS.length || Number.parseInt(message[0]) < 0) {
-                        whisper("[⚠️] Oops! The number you chose is invalid.", player.id, 0xa759f0, "normal", 2);
-                        return false;
-                    } else {
-                        if (Number.parseInt(message[0]) == 0) {
-                            let rand_int = getRandomInt(teamS.length);
-                            room.setPlayerTeam(teamS[rand_int].id, Team.RED);
-                            blueCaptainChoice = "random";
-                            clearTimeout(timeOutCap);
-                            announce(player.name + " đã chọn ngẫu nhiên người chơi: " + teamS[rand_int].name, null,  0x55bae2, "normal", 1);
-                            whisper("Bạn đã được chuyển sang đội RED 🔴", teamS[rand_int].id, 0xa759f0, null, 2);
-                            return false;
-                        }
-                        room.setPlayerTeam(teamS[Number.parseInt(message[0]) - 1].id, Team.RED);
-                        announce(player.name + " đã chọn người chơi: " + teamS[Number.parseInt(message[0]) - 1].name + " !",null, 0x55bae2, "normal", 1);
-                        whisper("Bạn đã được chuyển sang đội RED 🔴", teamS[Number.parseInt(message[0]) - 1].id, 0xa759f0, null, 2);
-                        return false;
-                    }
-                }
-            }
-            if (teamR.length > teamB.length && player.id == teamB[0].id) { // here we care if it's red turn && red cap talking
-                if (!Number.isNaN(Number.parseInt(message[0]))) {
-                    if (Number.parseInt(message[0]) > teamS.length || Number.parseInt(message[0]) < 0) {
-                        whisper("[⚠️] Oops! The number you chose is invalid.", player.id, 0xa759f0, "normal", 2);
-                        return false;
-                    } 
-                    else {
-                        if (Number.parseInt(message[0]) == 0) {
-                            let rand_int = getRandomInt(teamS.length);
-                            room.setPlayerTeam(teamS[rand_int].id, Team.BLUE);
-                            blueCaptainChoice = "random";
-                            clearTimeout(timeOutCap);
-                            announce(player.name + " đã chọn ngẫu nhiên người chơi: " + teamS[rand_int].name,null,  0x55bae2, "normal", 1);
-                            whisper("Bạn đã được chuyển sang đội BLUE 🔵", teamS[rand_int].id, 0xa759f0, null, 2);
-                            return false;
-                        }
-                        room.setPlayerTeam(teamS[Number.parseInt(message[0]) - 1].id, Team.BLUE);
-                        announce(player.name + " đã chọn người chơi: " + teamS[Number.parseInt(message[0]) - 1].name + " !",null, 0x55bae2, "normal", 1);
-                        whisper("Bạn đã được chuyển sang đội BLUE 🔵", teamS[Number.parseInt(message[0]) - 1].id, 0xa759f0, null, 2);
-                        return false;
-                    }
-                }
-            }
-        }
     }
 }
 function sleep (time) {
@@ -910,9 +653,6 @@ room.onGameStart = function (byPlayer) {
     is_servered = true;
     randomBallServePosition();
     countAFK = true;
-    for (var i = 0; i < extendedP.length; i++) {
-        extendedP[i][eP.ACT] = 0;
-    }
     blockGoalKick();
     lastPlayersTouched = [null, null];
     lastPlayersTouchedTime = Date.now();
@@ -941,69 +681,6 @@ room.onGameStop = function (byPlayer) {
     if(byPlayer != null){
         activities[byPlayer.id] = Date.now();
         idd = byPlayer.id;
-    }
-
-    if (idd == 0 && endGameVariable) {
-        updateTeams();
-        if (inChooseMode) {
-            if (players.length == 2 * maxTeamSize) {
-                inChooseMode = false;
-                resetBtn();
-                for (var i = 0; i < maxTeamSize; i++) {
-                    setTimeout(() => {
-                        randomBtn();
-                    }, 400 * i);
-                }
-                setTimeout(() => {
-                    room.startGame();
-                }, 2000);
-            } else {
-                if (lastWinner == Team.RED) {
-                    blueToSpecBtn();
-                } else if (lastWinner == Team.BLUE) {
-                    redToSpecBtn();
-                    blueToRedBtn();
-                } else {
-                    resetBtn();
-                }
-                setTimeout(() => {
-                    topBtn();
-                }, 500);
-            }
-        } else {
-            if (players.length == 2) {
-                if (lastWinner == Team.BLUE) {
-                    room.setPlayerTeam(teamB[0].id, Team.RED);
-                    room.setPlayerTeam(teamR[0].id, Team.BLUE);
-                }
-                setTimeout(() => {
-                    room.startGame();
-                }, 2000);
-            } else if (players.length == 5 || players.length >= 2 * maxTeamSize + 1) {
-                if (lastWinner == Team.RED) {
-                    blueToSpecBtn();
-                } else {
-                    redToSpecBtn();
-                    blueToRedBtn();
-                }
-                setTimeout(() => {
-                    topBtn();
-                }, 200);
-                activateChooseMode();
-            }
-            else if (players.length % 2 == 0) {
-                if (lastWinner == Team.RED) {
-                    blueToSpecBtn();
-                } else {
-                    redToSpecBtn();
-                    blueToRedBtn();
-                }
-                setTimeout(() => {
-                    topBtn();
-                }, 200);
-                activateChooseMode();
-            }
-        }
     }
 }
 
@@ -1126,10 +803,12 @@ room.onPlayerBallKick = function (player) {
                     return;
                 }
             } 
-            totalTouches = 0;
-            blocked = true;
-            room.setDiscProperties(0, {color: "0xff9c00", invMass: 0.65})
-            announce("🏐 Một pha chắn bóng bởi " + player.name + "!",null,0xd9ead3);
+            else {
+                totalTouches = 0;
+                blocked = true;
+                room.setDiscProperties(0, {color: "0xff9c00", invMass: 0.65})
+                announce("🏐 Một pha chắn bóng bởi " + player.name + "!",null,0xd9ead3);
+            }
         } 
         else if (lastPlayersTouched[0] != null && player.position.x >= -30 && player.position.x <= 30 && player.position.y <= 335 && player.position.y >= -335 && player.team == lastPlayersTouched[0].team) {
             totalTouches += 1
@@ -1189,27 +868,11 @@ room.onTeamGoal = function (team) {
     // setTimeout(() => { removeBlock(); }, 1000);
 }
 room.onTeamVictory = function (scores) {
-    // start_match();
-    // serve_team = 0;
-    //RecSistem.sendDiscordWebhook(scores);
 }
 
 var is_servered = true;
 room.onPositionsReset = function () {
-    //const scores = room.getScores();
-    //RecSistem.sendDiscordWebhook(scores);
     updateTeams();
-    for (var i = 0; i < extendedP.length ; i++) {
-        if (extendedP[i][eP.ACT] >= 60 * afkLimit) {
-            extendedP[i][eP.ACT] = 0;
-            room.setPlayerTeam(extendedP[i][eP.ID], Team.SPECTATORS);
-            let player = room.getPlayer(extendedP[i][eP.ID]);
-            setAFK(player, !getAFK(player));
-            announce(room.getPlayer(extendedP[i][eP.ID]).name + " đã được thêm vào danh sách AFK!", null, 0xF1948A, "italic");
-            room.reorderPlayers([extendedP[i][eP.ID]], false)
-            updateRoleOnPlayerOut();
-        }
-    }
     if (serve_team == 2 ) {
         if (teamB[0] != null) {
             player_serve = teamB[0];
@@ -1224,10 +887,6 @@ room.onPositionsReset = function () {
         }
         else player_serve = null;
     }
-    if (call) {
-        balanceTeams();
-        call = false;
-    }
     on_match = false;
     goalCheering = false;
     totalTouches = 0;
@@ -1238,8 +897,7 @@ room.onPositionsReset = function () {
     for (var i = 0; i<players.length; i++){
         activities[players[i].id] = Date.now();
     }
-    // loop_passbot();
-    // blockGoalKick();
+
     randomBallServePosition();
 }
 
@@ -1250,29 +908,19 @@ room.onRoomLink = function (url) {
     roomLink = url;
 }
 
-/* 
-room.onStadiumChange = function (newStadiumName, byPlayer) {
-    if (newStadiumName != "MAP") {
-        room.setCustomStadium(volleyMap);
-    }
-    if(byPlayer != null){
-    activities[byPlayer.id] = Date.now();
-    }
-} */
+
 room.onGameTick = function () {
     updateGameStatus();
-// afkKick()
+
     handlePlayerPosition();
     oldX = room.getBallPosition().x;
     oldY = room.getBallPosition().y;
-    handleInactivity();
     touchSpike();
     BallAfter2Second(); 
     
     if (twoSecond && serve_team == 0 ) {
         BallAfter2Second();
         if (Date.now() - touch_time > 3000 && !goalCheering) {
-            // console.log("ngu dữ ba")
             let pos_x = room.getDiscProperties(0).x;
             let t = pos_x > 0 ? 2 : 1;
             room.setDiscProperties(0, {x: t == Team.RED ? -415 : 415, y: 300, xspeed : 0, yspeed : 10});
@@ -1283,7 +931,6 @@ room.onGameTick = function () {
     if (last_serve_team != 0 && serve_team == 0) {
         let pos_x = room.getDiscProperties(0).x;
         let pos_y = room.getDiscProperties(0).y;
-        // announce(room.getDiscProperties(0).cGroup);
         if (pos_x > -670 && pos_x < 670 && pos_y > -337.5 && pos_y < 337.5) { 
             room.setDiscProperties(0, {cGroup: 193, invMass: 0.65});
         }   
@@ -1436,12 +1083,12 @@ request.open("POST", auth_hook);
 request.setRequestHeader('Content-type', 'application/json');
 
 let params = {
-	"username": "Statistics TVH Volleyball | Room: " + (room_type == 1 ? "Volley 3D" : "Footvolley"),
+	"username": "Private HSCL Room | Room: " + (room_type == 1 ? "Volley 3D" : "Footvolley"),
 	"avatar_url": "https://cdn4.iconfinder.com/data/icons/sports-fitness-line-color-vol-5/52/point__score__report__whiteboard__scoreboard__match__statistics-512.png",
 	"content": "",
 	"embeds": [{
 		"title": "",
-		"color": 2078513,
+		"color": 0xC700F5,
 		"description": "",
 		"timestamp": null,
 		"author": {},
@@ -1461,23 +1108,6 @@ let params = {
 request.send(JSON.stringify(params));
 }
 
-function randBallColor() {
-	var listColor = ["ff9768","507af8","0b421a","a2c4c9","c78d71","91146e","5ec8d8","e9a296","937342",
-"386e6b","95e1e9","aa8a00","ffd700","fdd298","defcba","cbadef","ff9768","abcfed","1b7e48","d0e0e3","2676bd","000000","ffffff","999999","03ffd4"];
-	let randNumber = getRandomInt(listColor.length-1);
-	let res = "0x"+ listColor[randNumber];
-	room.setDiscProperties(0,{color: res});
-}
-
-/* function randBallRadius() {
-	let randNumber = RandRangeInt(1,15);
-	room.setDiscProperties(0,{radius: randNumber});
-}
-*/
-function randPlayerRadius(player) {
-	let randNumber = RandRangeInt(1,50);
-	room.setPlayerDiscProperties(player.id, {radius: randNumber});
-}
 
 function random_uni() {
 	if (rand_uni == true) {
@@ -1618,176 +1248,6 @@ function random_uni() {
 
 /* PASSBOT MODE AND SPIKE MODE */
 
-function SpikeBot() {
-	let rand_xspeed = RandRangeInt(1,10);
-	let rand_yspeed = RandRangeInt(1,4);
-	let pos_x = RandRangeInt(-10,10);
-	let pos_y = RandRangeInt(-150,-140);
-	room.setDiscProperties(0,{x: pos_x, y: pos_y, xspeed: rand_xspeed, yspeed: rand_yspeed});
-}
-
-var rand_xspeed_list_red = [2.1, 2.2, 2.3, 2.4, 2.5]
-var rand_xspeed_list_blue = [-2.1, -2.2, -2.3, -2.4, -2.5]
-
-function PassBot() {
-	if (passbot_mode == 1) {
-		let rand_xspeed = 2.6;
-		let rand_yspeed = -11.895;
-		let pos_x = -200;
-		let pos_y = 185;
-		room.setDiscProperties(0,{x: pos_x, y: pos_y, xspeed: rand_xspeed, yspeed: rand_yspeed});
-	}
-	else if (passbot_mode == 2) {
-		let rand_xspeed = rand_xspeed_list_blue[getRandomInt(rand_xspeed_list_blue.length-1)];
-		let rand_yspeed = RandRangeInt(-13,-11);
-		let pos_x = RandRangeInt(240,250);
-		let pos_y = RandRangeInt(150,160);
-		room.setDiscProperties(0,{x: pos_x, y: pos_y, xspeed: rand_xspeed, yspeed: rand_yspeed});
-	}
-}
-
-
-function setPositionPassBot() {
-	var pos_x = 0;
-	var pos_y = 0;
-	if (passbot_mode == 1) {
-		pos_x = -190;
-		pos_y = -40;
-	}
-	else if (passbot_mode == 2) {
-		pos_x = 190;
-		pos_y = -40;
-	}
-	var players = room.getPlayerList().filter((player) => player.team == passbot_mode);
-			players.forEach(function(player) {			
-				room.setPlayerDiscProperties(player.id, {x: pos_x, y: pos_y});
-				pos_x , pos_y += 5;
-			});
-	createBlock();
-}
-
-function loop_passbot() {
-	if (passbot_mode != 0 ) {
-		announce(passbot_mode);
-		setPositionPassBot();
-		sleep(2000).then(() => {
-		PassBot();    
-		});
-	}
-}
-
-function print(x) {
-	console.log(typeof room.getDiscProperties(x).x);
-}
-
-function move(disc,pos_x,pos_y) {
-	room.setDiscProperties(disc,{x: pos_x, y: pos_y})
-}
-
-var randBlockCount = 0;
-var pos_x = [];
-var pos_y = [];
-
-function recogBlock() { 
-	for (var i = 19; i < 29; i++) {
-	pos_x[i] = (room.getDiscProperties(i).x)
-	pos_y[i] = (room.getDiscProperties(i).y)
-	}
-}
-
-function createBlock() {
-	randBlockCount = RandRangeInt(6,11)
-	if (passbot_mode == 1) {
-		let x_pos = RandRangeInt(4,6)
-		let y_pos = RandRangeInt(-170,-165);
-		for (var i = 19; i < 19 + randBlockCount; i++) {
-			room.setDiscProperties(i,{x: x_pos, y: y_pos})
-			y_pos += 22
-		}
-	}
-	else if (passbot_mode == 2) {
-		let x_pos = RandRangeInt(-6,-4)
-		let y_pos = RandRangeInt(-170,-165);
-		for (var i = 19; i < 19 + randBlockCount; i++) {
-			room.setDiscProperties(i,{x: x_pos, y: y_pos})
-			y_pos += 22
-		}
-	}
-}
-
-/* function removeBlock() {
-	for (var i = 19; i < 29; i++) {
-		room.setDiscProperties(i,{x: pos_x[i], y: pos_y[i]})
-	}
-}
-*/
-function JumpSpinServe() {
-	if (serve_team == 1) {
-		let x_gra = 0.002;
-		let x_pos = -350;
-		let y_pos = 200;
-		let x_speed = 1.2;
-		let y_speed = -16;
-		room.setDiscProperties(0,{x:x_pos, y: y_pos, xgravity: x_gra, xspeed: x_speed, yspeed: y_speed})
-	}
-	else if (serve_team == 2) {
-		let x_gra = -0.002;
-		let x_pos = 350;
-		let y_pos = 200;
-		let x_speed = -1.2;
-		let y_speed = -16;
-		room.setDiscProperties(0,{x:x_pos, y: y_pos, xgravity: x_gra, xspeed: x_speed, yspeed: y_speed})
-	}
-	serve_team = 0;
-}
-
-function JumpFloatServe() {
-	if (serve_team == 1) {
-		let x_gra = -0.0001;
-		let x_pos = -350;
-		let y_pos = 200;
-		let x_speed = 1.2;
-		let y_speed = -13.5;
-		room.setDiscProperties(0,{x:x_pos, y: y_pos, xgravity: x_gra, xspeed: x_speed, yspeed: y_speed})
-	}
-	else if (serve_team == 2) {
-		let x_gra = 0.0001;
-		let x_pos = 350;
-		let y_pos = 200;
-		let x_speed = -1.2;
-		let y_speed = -13.5;
-		room.setDiscProperties(0,{x:x_pos, y: y_pos, xgravity: x_gra, xspeed: x_speed, yspeed: y_speed})
-	}
-	serve_team = 0;
-}
-
-function FloatServe() {
-	if (serve_team == 1) {
-		let x_gra = -0.0000001;
-		let x_pos = -350;
-		let y_pos = 200;
-		let x_speed = 1.2;
-		let y_speed = -11;
-		room.setDiscProperties(0,{x:x_pos, y: y_pos, xgravity: x_gra, xspeed: x_speed, yspeed: y_speed})
-	}
-	else if (serve_team == 2) {
-		let x_gra = 0.0000001;
-		let x_pos = 350;
-		let y_pos = 200;
-		let x_speed = -1.2;
-		let y_speed = -11;
-		room.setDiscProperties(0,{x:x_pos, y: y_pos, xgravity: x_gra, xspeed: x_speed, yspeed: y_speed})
-	}
-	serve_team = 0;
-}
-
-function console_pos(player) {
-	let pos_x = room.getDiscProperties(player.id).x;
-	let pos_y = room.getDiscProperties(player.id).y;
-	console.log(pos_x + ','+ pos_y)
-	whisper(pos_x + ','+ pos_y, player.id)
-}
-
 function changeBallColor() {
 	if (totalTouches == 2) {
 		room.setDiscProperties(0, {color: "0x56ff00", invMass: 1.25})
@@ -1856,31 +1316,6 @@ var statInterval = 6;
 /* AFK */
 var countAFK = false;
 
-function handleInactivity() { // handles inactivity : players will be kicked after afkLimit
-    if (countAFK && (teamR.length + teamB.length) > 1) {
-        for (var i = 0; i < teamR.length ; i++) {
-            setActivity(teamR[i], getActivity(teamR[i]) + 1);
-        }
-        for (var i = 0; i < teamB.length ; i++) {
-            setActivity(teamB[i], getActivity(teamB[i]) + 1);
-        }
-    }
-    for (var i = 0; i < extendedP.length ; i++) {
-        if (extendedP[i][eP.ACT] == 60 * (2/3 * afkLimit)) {
-            whisper("⛔ @" + room.getPlayer(extendedP[i][eP.ID]).name + ", nếu bạn không di chuyển trong " + Math.floor(afkLimit / 3) + " giây nữa, bạn sẽ được đưa ra dự bị!", extendedP[i][eP.ID], 0xffffff, "bold", 2);
-            // console.log(room.getPlayer(extendedP[i][eP.ID]).team, serve_team);
-        }
-        if (extendedP[i][eP.ACT] >= 60 * afkLimit && room.getPlayer(extendedP[i][eP.ID]).team == serve_team) {
-            extendedP[i][eP.ACT] = 0;
-            room.setPlayerTeam(extendedP[i][eP.ID], Team.SPECTATORS);
-            let player = room.getPlayer(extendedP[i][eP.ID]);
-            setAFK(player, !getAFK(player));
-            announce(player.name + " đã được thêm vào danh sách AFK!", null, 0xF1948A, "italic");
-            room.reorderPlayers([extendedP[i][eP.ID]], false);
-            updateRoleOnPlayerOut();
-        }
-    }
-}
 
 function getAuth(player) {
 	return extendedP.filter((a) => a[0] == player.id) != null ? extendedP.filter((a) => a[0] == player.id)[0][eP.AUTH] : null;
@@ -2468,347 +1903,6 @@ function backFromAFK(player_id) {
 }
 
 /* BALANCE & CHOOSE FUNCTIONS */
-function updateRoleOnPlayerIn() {
-    updateTeams();
-    if (inChooseMode) {
-        getSpecList(teamR.length <= teamB.length ? teamR[0] : teamB[0]);
-    }
-    if (!on_match && !call) balanceTeams();
-    else call = true;
-}
-var game;
-//maxteamsize = 2;
-function updateRoleOnPlayerOut() {
-    updateTeams();
- /*    if (room.getScores() != null) {
-        // Out do thua quá nhiều
-        const scores = room.getScores();
-        if (players.length >= 2 * maxTeamSize && teamR.length != teamB.length) {
-            if (teamR.length < teamB.length) {
-                if (scores.blue - scores.red == 5) {
-                    endGame(Team.BLUE);
-                    announce("Đội RED 🔴 đã thoát trận khi đang bị dẫn điểm quá xa nên trận đấu kết thúc", null, 0xf85c5c, "normal");
-                    setTimeout(() => {
-                        room.stopGame();
-                    }, 1000);
-                    return;
-                }
-            } else {
-                if (scores.red - scores.blue == 2) {
-                    endGame(Team.RED);
-                    announce("Đội BLUE 🔵 đã thoát trận khi đang bị dẫn điểm quá xa nên trận đấu kết thúc", null, 0x5cb3f8, "normal");
-                    setTimeout(() => {
-                        room.stopGame();
-                    }, 1000);
-                    return;
-                }
-            }
-        }
-    } */
-    if (inChooseMode) {
-        // không có người thì cho qua red, hơi cần thiết
-        if (teamR.length == 0 || teamB.length == 0) {
-            teamR.length == 0 ? room.setPlayerTeam(teamS[0].id, Team.RED) : room.setPlayerTeam(teamS[0].id, Team.BLUE);
-            return;
-        }
-        // chuyển người vào vị trí thiếu nếu cần vừa đủ người trong speclist
-        if (Math.abs(teamR.length - teamB.length) == teamS.length) {
-            // room.sendChat("Sem alternativas, deixe me lidar com essa situação. ...");
-            // room.sendAnnouncement("[Juiz] With no possibility of recruitment, let me decide...", null, 0xc0bdb1, "normal");
-            deactivateChooseMode();
-            resumeGame();
-            var b = teamS.length;
-            if (teamR.length > teamB.length) {
-                for (var i = 0; i < b; i++) {
-                    setTimeout(() => {
-                        room.setPlayerTeam(teamS[0].id, Team.BLUE);
-                    }, 5 * i);
-                }
-            } else {
-                for (var i = 0; i < b; i++) {
-                    setTimeout(() => {
-                        room.setPlayerTeam(teamS[0].id, Team.RED);
-                    }, 5 * i);
-                }
-            }
-            return;
-        }
-        if (room.getScores() == null) {
-            if (streak == 0 && Math.abs(teamR.length - teamB.length) == 1) { 
-                announce("Cân bằng đội...",null, 0xF1948A, "normal");
-                teamR.length > teamB.length ? room.setPlayerTeam(teamR[teamR.length - 1].id, Team.SPECTATORS) : room.setPlayerTeam(teamB[teamB.length - 1].id, Team.SPECTATORS);
-            }
-        }
-        if (teamR.length == teamB.length && teamS.length < 2) {
-            deactivateChooseMode();
-            resumeGame();
-            return;
-        }
-        capLeft ? choosePlayer() : getSpecList(teamR.length <= teamB.length ? teamR[0] : teamB[0]);
-    }
-    if (!on_match && !call) balanceTeams();
-    else call = true;
-}
-
-function balanceTeams() {
-    if (!inChooseMode) {
-        if (players.length == 1 && teamR.length == 0) { // 1 player
-            // thêm 3 map chesse làm
-            quickRestart();
-            room.setPlayerTeam(players[0].id, Team.RED);
-        } else if (Math.abs(teamR.length - teamB.length) == teamS.length && teamS.length > 0) { // specific players provide necessary players
-            const n = Math.abs(teamR.length - teamB.length);
-            if (teamR.length > teamB.length) {
-                for (var i = 0; i < n; i++) {
-                    room.setPlayerTeam(teamS[i].id, Team.BLUE);
-                }
-            } else {
-                for (var i = 0; i < n; i++) {
-                    room.setPlayerTeam(teamS[i].id, Team.RED);
-                }
-            }
-        } else if (Math.abs(teamR.length - teamB.length) > teamS.length) { // there are not enough players
-            const n = Math.abs(teamR.length - teamB.length);
-            if (players.length == 1) {
-                quickRestart();
-                room.setPlayerTeam(players[0].id, Team.RED);
-                return;
-            } else if (players.length == 4) {
-                quickRestart();
-            }
-           /* cần cho phát triển database 
-            if (players.length == maxTeamSize * 2 - 1) {
-                allReds = [];
-                allBlues = [];
-            } */
-            if (teamR.length > teamB.length) {
-                for (var i = 0; i < n; i++) {
-                    room.setPlayerTeam(teamR[teamR.length - 1 - i].id, Team.SPECTATORS);
-                }
-            } else {
-                for (var i = 0; i < n; i++) {
-                    room.setPlayerTeam(teamB[teamB.length - 1 - i].id, Team.SPECTATORS);
-                }
-            }
-        } else if (Math.abs(teamR.length - teamB.length) < teamS.length && teamR.length != teamB.length) { // recruitment mode
-            room.pauseGame(true);
-            activateChooseMode();
-            choosePlayer();
-        } else if (teamS.length >= 2 && teamR.length == teamB.length && teamR.length < maxTeamSize) { // 1 in red, 1 in blue and 2 or more specifications
-                room.pauseGame(true);
-                activateChooseMode();
-                choosePlayer();
-            // topBtn();
-        }
-    }
-}
-
-function choosePlayer() {
-    clearTimeout(timeOutCap);
-    if (teamR.length <= teamB.length && teamR.length != 0) {
-        whisper("Nhập số trong danh sách sau để pick.", teamR[0].id, 0x5db5db, "normal",2);
-        announce(teamR[0].name + " sẽ pick", null, 0x5db5db);
-        timeOutCap = setTimeout(function(player) {
-            announce("Nhanh lên, @" + player.name + ", chỉ còn " + Number.parseInt(chooseTime / 2) + " giây để pick!", null, 0xf2a000, "normal", 2);
-            timeOutCap = setTimeout(function(player) {
-                room.kickPlayer(player.id, "Không chọn đúng thời gian", false);
-            }, chooseTime * 500, teamR[0]);
-        }, chooseTime * 1000, teamR[0]);
-    } else if (teamB.length < teamR.length && teamB.length != 0) {
-        room.sendAnnouncement("Nhập số trong danh sách sau để pick.", teamB[0].id, 0x5db5db, "normal");
-        announce(teamB[0].name + " sẽ pick", null, 0x5db5db );
-        timeOutCap = setTimeout(function(player) {
-            announce("Nhanh lên, @" + player.name + ", chỉ còn " + Number.parseInt(chooseTime / 2) + " giây để pick!", null, 0xf2a000, "normal", 2);
-            timeOutCap = setTimeout(function(player) {
-                room.kickPlayer(player.id, "Không chọn đúng thời gian", false);
-            }, chooseTime * 500, teamB[0]);
-        }, chooseTime * 1000, teamB[0]);
-    }
-    if (teamR.length != 0 && teamB.length != 0) getSpecList(teamR.length <= teamB.length ? teamR[0] : teamB[0]);
-}
-
-function getSpecList(player) {
-    var cstm = "Players: Random[0], ";
-    for (var i = 0; i < teamS.length; i++) {
-        if (140 - cstm.length < (teamS[i].name + "[" + (i + 1) + "], ").length) {
-            room.sendChat(cstm, player.id);
-            cstm = "... ";
-        }
-        cstm += teamS[i].name + "[" + (i + 1) + "], ";
-    }
-    cstm = cstm.substring(0, cstm.length - 2);
-    cstm += ".";
-    announce(cstm, null, 0xE59866, "normal");
-}
-
-function quickRestart() {
-    room.stopGame();
-    setTimeout(() => {
-        room.startGame();
-    }, 2000);
-}
-
-function resumeGame() {
-    setTimeout(() => {
-        room.startGame();
-    }, 2000);
-    setTimeout(() => {
-        room.pauseGame(false);
-    }, 1000);
-}
-
-function activateChooseMode() {
-    inChooseMode = true;
-    slowMode = 2;
-    // room.sendAnnouncement("Recruitment mode activated!", null, 0x55bae2, "normal");
-}
-
-function deactivateChooseMode() {
-    inChooseMode = false;
-    clearTimeout(timeOutCap);
-    if (slowMode != 0) {
-        slowMode = 0;
-        // room.sendAnnouncement("Recruitment mode closed.", null, 0xf2a000, "normal");
-    }
-    redCaptainChoice = "";
-    blueCaptainChoice = "";
-}
-
-function topBtn() {
-    if (teamS.length == 0) {
-        return;
-    } else {
-        if (teamR.length == teamB.length) {
-            if (teamS.length > 1) {
-                room.setPlayerTeam(teamS[0].id, Team.RED);
-                room.setPlayerTeam(teamS[1].id, Team.BLUE);
-            }
-            return;
-        } else if (teamR.length < teamB.length) {
-            room.setPlayerTeam(teamS[0].id, Team.RED);
-        } else {
-            room.setPlayerTeam(teamS[0].id, Team.BLUE);
-        }
-    }
-}
-
-function randomBtn() {
-    if (teamS.length == 0) {
-        return;
-    } else {
-        if (teamR.length == teamB.length) {
-            if (teamS.length > 1) {
-                var r = getRandomInt(teamS.length);
-                room.setPlayerTeam(teamS[r].id, Team.RED);
-                teamS = teamS.filter((spec) => spec.id != teamS[r].id);
-                room.setPlayerTeam(teamS[getRandomInt(teamS.length)].id, Team.BLUE);
-            }
-            return;
-        } else if (teamR.length < teamB.length) {
-            room.setPlayerTeam(teamS[getRandomInt(teamS.length)].id, Team.RED);
-        } else {
-            room.setPlayerTeam(teamS[getRandomInt(teamS.length)].id, Team.BLUE);
-        }
-    }
-}
-
-function blueToSpecBtn() {
-    resettingTeams = true;
-    setTimeout(() => {
-        resettingTeams = false;
-    }, 100);
-    for (var i = 0; i < teamB.length; i++) {
-        room.setPlayerTeam(teamB[teamB.length - 1 - i].id, Team.SPECTATORS);
-    }
-}
-
-function redToSpecBtn() {
-    resettingTeams = true;
-    setTimeout(() => {
-        resettingTeams = false;
-    }, 100);
-    for (var i = 0; i < teamR.length; i++) {
-        room.setPlayerTeam(teamR[teamR.length - 1 - i].id, Team.SPECTATORS);
-    }
-}
-
-function resetBtn() {
-    resettingTeams = true;
-    setTimeout(() => {
-        resettingTeams = false;
-    }, 100);
-    if (teamR.length <= teamB.length) {
-        for (var i = 0; i < teamR.length; i++) {
-            room.setPlayerTeam(teamB[teamB.length - 1 - i].id, Team.SPECTATORS);
-            room.setPlayerTeam(teamR[teamR.length - 1 - i].id, Team.SPECTATORS);
-        }
-        for (var i = teamR.length; i < teamB.length; i++) {
-            room.setPlayerTeam(teamB[teamB.length - 1 - i].id, Team.SPECTATORS);
-        }
-    } else {
-        for (var i = 0; i < teamB.length; i++) {
-            room.setPlayerTeam(teamB[teamB.length - 1 - i].id, Team.SPECTATORS);
-            room.setPlayerTeam(teamR[teamR.length - 1 - i].id, Team.SPECTATORS);
-        }
-        for (var i = teamB.length; i < teamR.length; i++) {
-            room.setPlayerTeam(teamR[teamR.length - 1 - i].id, Team.SPECTATORS);
-        }
-    }
-}
-
-function blueToRedBtn() {
-    resettingTeams = true;
-    setTimeout(() => {
-        resettingTeams = false;
-    }, 100);
-    for (var i = 0; i < teamB.length; i++) {
-        room.setPlayerTeam(teamB[i].id, Team.RED);
-    }
-}
-
-function checkTime() {
-    const scores = room.getScores();
-    game.scores = scores;
-    if (Math.abs(scores.time - scores.timeLimit) <= 0.01 && scores.timeLimit != 0) {
-        if (scores.red != scores.blue) {
-            if (checkTimeVariable == false) {
-                checkTimeVariable = true;
-                setTimeout(() => {
-                    checkTimeVariable = false;
-                }, 3000);
-                scores.red > scores.blue ? endGame(Team.RED) : endGame(Team.BLUE);
-                setTimeout(() => {
-                    room.stopGame();
-                }, 2000);
-            }
-            return;
-        }
-        goldenGoal = true;
-       // room.sendAnnouncement("⚽ Gol de Gold!", null, 0xF1AF09);
-        room.sendAnnouncement(centerText("PROLONGATION"), null, Cor.Amarelo, "bold");
-        room.sendAnnouncement(centerText("I'll give " + drawTimeLimit * 60 + " seconds!"), null, Cor.White, "normal");
-        room.sendAnnouncement(centerText("⚽ First goal wins! ⚽"), null, Cor.White, "normal");
-    }
-    if (scores.time > scores.timeLimit + drawTimeLimit * 60 - 15 && scores.time <= scores.timeLimit + drawTimeLimit * 60) {
-        if (checkTimeVariable == false && announced == false) {
-            checkTimeVariable = true;
-            announced = true;
-            setTimeout(() => {
-                checkTimeVariable = false;
-            }, 10);
-            room.sendAnnouncement(centerText("⌛ 15 seconds to a tie!"), null, Cor.Amarelo, "bold");
-        }
-    }
-    if (scores.time > (scores.timeLimit + drawTimeLimit * 60)) {
-        if (checkTimeVariable == false) {
-            checkTimeVariable = true;
-            setTimeout(() => { checkTimeVariable = false; }, 10);
-            endGame(Team.SPECTATORS);
-            room.stopGame();
-            goldenGoal = false;
-        }
-    }
-}
 
 function endGame(winner) { // lida com o final de um jogo: nenhuma função stopGame dentro
     players.length >= 2 * maxTeamSize - 1 ? activateChooseMode() : null;

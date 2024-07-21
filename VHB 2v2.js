@@ -642,7 +642,7 @@ function getDateNow() {
     if (minutes.length == 1) minutes = "0"+ minutes;
     
     return curDay + "/" + curMonth + "/" + curYear + " lúc " + hours + ":" + minutes; 
-    }
+}
 
 function RandRangeInt(min,max){
     return Math.floor(Math.random() * (max - min)) + min;
@@ -2791,7 +2791,7 @@ let RecSistem = {
     },
     getParams: (scores, red, blue)=>{
         let params = {
-        "username": "Statistics TVH Volleyball | Room: " + room_type,
+        "username": "Statistics TVH Volleyball | Room: " + (room_type == 1 ? "Volley 3D" : "Footvolley"),
         "avatar_url": "https://cdn4.iconfinder.com/data/icons/sports-fitness-line-color-vol-5/52/point__score__report__whiteboard__scoreboard__match__statistics-512.png",
         "content": "",
         "embeds": [{
@@ -2850,7 +2850,7 @@ request.open("POST", auth_hook);
 request.setRequestHeader('Content-type', 'application/json');
 
 let params = {
-	"username": "Statistics TVH Volleyball | Room: " + room_type,
+	"username": "Statistics TVH Volleyball | Room: " + (room_type == 1 ? "Volley 3D" : "Footvolley"),
 	"avatar_url": "https://cdn4.iconfinder.com/data/icons/sports-fitness-line-color-vol-5/52/point__score__report__whiteboard__scoreboard__match__statistics-512.png",
 	"content": "",
 	"embeds": [{
