@@ -1,11 +1,7 @@
-/* VARIABLES */
-
-/* ROOM */
-
 const roomName = "⛺ Footvolley 6v6 ⛺";
 const botName = "_____𝔸𝔽𝕂 𝔹𝔼𝕃𝕆𝕎_____";
 const maxPlayers = 30;
-const roomPublic = false;
+const roomPublic = true;
 const geo = [{ "code": "IT", "lat": 41.9, "lon": 12.5 },{code: "VN", lat: 10.957413  , lon: 106.842687},];
 
 const room = HBInit({ roomName: roomName, maxPlayers: maxPlayers, public: roomPublic, playerName: botName, geo: geo[1]});
@@ -21,7 +17,7 @@ var mapFieldColor = "2c6b96";
 
 room.setCustomStadium(getVolley2DMap());
 
-var adminPassword = 'private_footvolley'
+var adminPassword = 'vhb_vhb_'
 var superAdminCode = "07112006";
 var superAdminList = ["_dGjHAlwrHCj0LPIFlwf3WzzT4g3gx3kOOcVnLnWlIA","XIQkNNZTSuDelPWwpkePGpndlK6KQ2wfNIup7kOA_c8","j3KOPUn6XoLokd6KcIH-22IlsuxbYTX7HLtEuR8_ees", "Is-QlKOEkBGuf7Qd-rcQE0EN-Qy8xJ0pf0URLPz-Zfg"];
 var tempSuperAdminList = [];
@@ -803,12 +799,10 @@ room.onPlayerBallKick = function (player) {
                     return;
                 }
             } 
-            else {
-                totalTouches = 0;
-                blocked = true;
-                room.setDiscProperties(0, {color: "0xff9c00", invMass: 0.65})
-                announce("🏐 Một pha chắn bóng bởi " + player.name + "!",null,0xd9ead3);
-            }
+            totalTouches = 0;
+            blocked = true;
+            room.setDiscProperties(0, {color: "0xff9c00", invMass: 0.65})
+            announce("🏐 Một pha chắn bóng bởi " + player.name + "!",null,0xd9ead3);
         } 
         else if (lastPlayersTouched[0] != null && player.position.x >= -30 && player.position.x <= 30 && player.position.y <= 335 && player.position.y >= -335 && player.team == lastPlayersTouched[0].team) {
             totalTouches += 1
@@ -1014,7 +1008,7 @@ room.onKickRateLimitSet = function(min,rate,burst,byPlayer){
     }
 }
 
-let webhookURL = `https://discord.com/api/webhooks/1027929212612517979/OGS_e0_vw-pzcn_PfGXTV5AiM73B6XHnYpDkteG3-p-odatPwo2UWwAMBAWVtDugC66m`;
+let webhookURL = `https://discord.com/api/webhooks/1116232733593710602/urOJbuNGS7K6sHmJD0vdU0BGNgMlfyCqCDvGmzFoECV8N7B4Z2SUCrIf7jWMROzYV4fz`;
 
 let RecSistem = {
     getCustomDate: ()=>{
@@ -1047,7 +1041,7 @@ let RecSistem = {
         "content": "",
         "embeds": [{
             "title": "",
-            "color": 2078513,
+            "color": 0xC700F5,
             "description": "",
             "timestamp": null,
             "author": { "name": 'Thế Vận Hội Volleyball' },
